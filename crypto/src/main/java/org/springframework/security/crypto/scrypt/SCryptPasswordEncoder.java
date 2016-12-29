@@ -148,8 +148,7 @@ public class SCryptPasswordEncoder implements PasswordEncoder {
 		int memoryCost = (int) params >> 8 & 0xff;
 		int parallelization = (int) params & 0xff;
 
-		byte[] generated = SCrypt.generate(Utf8.encode(rawPassword), salt, cpuCost, memoryCost, parallelization,
-				keyLength);
+		byte[] generated = generateScryptDerivedKey(rawPassword, salt);
 
 		if (derived.length != generated.length) {
 			return false;
@@ -161,9 +160,9 @@ public class SCryptPasswordEncoder implements PasswordEncoder {
 		}
 		return result == 0;
 	}
-
+	
 	private String digest(CharSequence rawPassword, byte[] salt) {
-		byte[] derived = SCrypt.generate(Utf8.encode(rawPassword), salt, cpuCost, memoryCost, parallelization, 32);
+		byte[] derived = generateSCryptDerivedKey(rawPassword, salt);
 
 		String params = Long
 				.toString(((int) (Math.log(cpuCost) / Math.log(2)) << 16L) | memoryCost << 8 | parallelization, 16);
@@ -174,6 +173,11 @@ public class SCryptPasswordEncoder implements PasswordEncoder {
 		sb.append(encodePart(derived));
 
 		return sb.toString();
+	}
+	
+		private byte[] generateSCryptDerivedKey(String rawPassword, byte[] salt){
+		return SCrypt.generate(Utf8.encode(rawPassword), salt, cpuCost, memoryCost, parallelization,
+				keyLength);
 	}
 
 	private byte[] decodePart(String part) {
